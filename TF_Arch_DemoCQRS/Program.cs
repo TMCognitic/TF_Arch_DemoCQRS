@@ -1,8 +1,13 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data.Common;
 using System.Data.SqlClient;
+using System.Reflection;
+using TF_Arch_DemoCQRS.Models.Commands;
 using TF_Arch_DemoCQRS.Models.Entities;
 using TF_Arch_DemoCQRS.Models.Queries;
+using Tools.Cqrs;
+using Tools.Cqrs.Command;
 using Tools.Cqrs.Queries;
 
 namespace TF_Arch_DemoCQRS
@@ -18,8 +23,8 @@ namespace TF_Arch_DemoCQRS
             // Add services to the container.
             builder.Services.AddControllersWithViews();
             builder.Services.AddTransient<DbConnection>(sp => new SqlConnection(configuration.GetConnectionString("Default")));
-            builder.Services.AddScoped<IQueryHandler<GetAllProductQuery,IEnumerable<Produit>>, GetAllProductQueryHandler >();
-            builder.Services.AddScoped<GetOneProductQueryHandler>();
+            builder.Services.AddHandlers();
+            builder.Services.AddScoped<IDispatcher, Dispatcher>();
 
             var app = builder.Build();
 
@@ -43,6 +48,17 @@ namespace TF_Arch_DemoCQRS
                 pattern: "{controller=Home}/{action=Index}/{id?}");
 
             app.Run();
+        }
+
+        private static bool IsHandler(Type type)
+        {
+            if (!type.IsGenericType)
+                return false;
+
+            Type[] cqrsHandlers = new[] { typeof(ICommandHandler<>), typeof(IQueryHandler<,>) };
+
+            Type typeDefinition = type.GetGenericTypeDefinition();
+            return cqrsHandlers.Contains(typeDefinition);
         }
     }
 }

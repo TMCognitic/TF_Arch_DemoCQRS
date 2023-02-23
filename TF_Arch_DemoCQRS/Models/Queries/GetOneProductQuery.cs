@@ -1,10 +1,12 @@
 ﻿using System.Data.Common;
 using TF_Arch_DemoCQRS.Models.Entities;
 using TF_Arch_DemoCQRS.Models.Mappers;
+using Tools.Ado;
+using Tools.Cqrs.Queries;
 
 namespace TF_Arch_DemoCQRS.Models.Queries
 {
-    public class GetOneProductQuery
+    public class GetOneProductQuery : IQuery<Produit?>
     {
         public int Id { get; init; }
 
@@ -14,7 +16,7 @@ namespace TF_Arch_DemoCQRS.Models.Queries
         }
     }
 
-    public class GetOneProductQueryHandler
+    public class GetOneProductQueryHandler : IQueryHandler<GetOneProductQuery, Produit?>
     {
         private readonly DbConnection _connection;
 
@@ -27,28 +29,7 @@ namespace TF_Arch_DemoCQRS.Models.Queries
         {
             using (_connection)
             {
-                using (DbCommand command = _connection.CreateCommand())
-                {
-                    command.CommandText = "Select Id, Nom, [Description], Prix, DateCreation, Actif From Produit Where Id = @Id;";
-                    DbParameter idParameter = command.CreateParameter();
-                    idParameter.ParameterName = "Id";
-                    idParameter.Value = query.Id;
-                    command.Parameters.Add(idParameter);
-
-                    _connection.Open();
-
-                    using (DbDataReader reader = command.ExecuteReader())
-                    {
-                        if(reader.Read())
-                        {
-                            return reader.ToProduit();
-                        }
-                        else
-                        {
-                            return null;
-                        }
-                    }
-                }
+                return _connection.ExecuteReader("Select Id, Nom, [Description], Prix, DateCreation, Actif From Produit Where Id = @Id;", false, dr => dr.ToProduit(), query).SingleOrDefault();                
             }
         }
     }

@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Tools.Cqrs.Queries
+namespace Tools.Cqrs.Command
 {
-    public interface IQuery<TResult>
+    public interface ICommand
     {
     }
 }
